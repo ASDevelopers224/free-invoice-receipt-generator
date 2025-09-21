@@ -1,2 +1,2 @@
-# invoice-receipt-generator
-A complete Invoice &amp; Receipt Generator System with PDF export, custom templates, and billing features. Built with [tech stack], perfect for businesses &amp; freelancers.
+# free-invoice-receipt-generator
+Free to use Invoice & Receipt Generator with PDF export. Create professional bills and receipts instantly — no signup required.
