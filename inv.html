@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Exact Invoice</title>
+<style>
+  @page { size: A4; margin: 0; }
+  body { margin: 0; font-family: Arial, sans-serif; background: #ccc; }
+  .page {
+    width: 210mm;
+    height: 297mm;
+    margin: auto;
+    background: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  /* Waves */
+  .top-wave, .bottom-wave {
+    position: absolute; left: 0; width: 100%; height: 90px;
+  }
+  .top-wave { top: 0; }
+  .bottom-wave { bottom: 0; transform: rotate(180deg); }
+  /* Content */
+  .content { position: relative; padding: 110px 40px 100px 40px; }
+  h1 { text-align: center; margin: 0 0 25px; font-size: 28px; }
+  .info { display: flex; justify-content: space-between; margin-bottom: 25px; font-size: 13px; }
+  .bill b { display:block; margin-bottom:5px; font-size: 12px; }
+  .meta { text-align: right; font-size: 13px; }
+  .meta b { display:block; margin-top:5px; font-size: 12px; }
+  /* Table */
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+  table th, table td {
+    border: 1.5px solid #000;
+    padding: 7px;
+    text-align: center;
+  }
+  table th { font-weight: bold; }
+  /* Totals */
+  .totals { width: 38%; float: right; margin-top: 15px; font-size: 13px; }
+  .totals table { border: 1.5px solid #000; width: 100%; border-collapse: collapse; }
+  .totals td { border: 1.5px solid #000; padding: 7px; }
+  .totals td:first-child { text-align: left; }
+  .totals td:last-child { text-align: right; }
+  /* Payment */
+  .payment { clear: both; margin-top: 70px; font-size: 13px; }
+  .payment b { display:block; margin-bottom:5px; font-size: 12px; }
+  /* Footer */
+  .footer {
+    position: absolute; bottom: 90px; left: 40px; right: 40px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .logo-box { display:flex; align-items:center; gap:10px; font-weight: bold; font-size:14px; }
+  .logo-icon {
+    width:35px; height:35px; 
+    background: repeating-linear-gradient(
+      45deg,
+      #0fb3aa,
+      #0fb3aa 8px,
+      #0ea69f 8px,
+      #0ea69f 16px
+    );
+    border-radius:5px;
+  }
+  .thankyou {
+    font-family: "Brush Script MT", cursive;
+    font-size: 26px;
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <!-- Top wave -->
+    <svg class="top-wave" viewBox="0 0 1200 90" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <path d="M0,0 L1200,0 L1200,40 C900,90 300,30 0,70 Z" fill="#0fb3aa"/>
+    </svg>
+
+    <div class="content">
+      <h1>Invoice</h1>
+      <div class="info">
+        <div class="bill">
+          <b>BILL TO :</b>
+          <strong>Alfredo Torres</strong><br>
+          +123-456-7890<br>
+          hello@realgreatsite.com<br>
+          123 Anywhere St., Any City, ST 12345
+        </div>
+        <div class="meta">
+          <b>DUE DATE :</b> March 31, 2022<br><br>
+          <b>INV-1234567</b>
+        </div>
+      </div>
+
+      <table id="invoiceTable">
+        <thead>
+          <tr>
+            <th>Qty</th><th>Description</th><th>Price</th><th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Motherboard</td><td>100</td><td></td></tr>
+          <tr><td>1</td><td>Keyboard</td><td>50</td><td></td></tr>
+          <tr><td>2</td><td>Gaming Mouse</td><td>75</td><td></td></tr>
+          <tr><td>3</td><td>Screen Cleaner</td><td>10</td><td></td></tr>
+          <tr><td>1</td><td>Power Supply</td><td>20</td><td></td></tr>
+          <tr><td>1</td><td>Graphic Card</td><td>200</td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <table>
+          <tr><td>SUBTOTAL</td><td id="subtotal">$0</td></tr>
+          <tr><td>TAX (15%)</td><td id="tax">$0</td></tr>
+          <tr><td><b>TOTAL PRICE</b></td><td id="total"><b>$0</b></td></tr>
+        </table>
+      </div>
+
+      <div class="payment">
+        <b>SEND PAYMENT TO :</b>
+        <strong>Hanover & Tyke</strong><br>
+        Bank Account 12345678
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="logo-box">
+        <div class="logo-icon"></div>
+        Hanover and Tyke
+      </div>
+      <div class="thankyou">Thank You</div>
+    </div>
+
+    <!-- Bottom wave -->
+    <svg class="bottom-wave" viewBox="0 0 1200 90" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <path d="M0,0 L1200,0 L1200,40 C900,90 300,30 0,70 Z" fill="#0fb3aa"/>
+    </svg>
+  </div>
+
+<script>
+  function calc() {
+    let rows = document.querySelectorAll("#invoiceTable tbody tr");
+    let subtotal = 0;
+    rows.forEach(r => {
+      let q = parseInt(r.cells[0].innerText) || 0;
+      let p = parseFloat(r.cells[2].innerText) || 0;
+      let amt = q * p;
+      r.cells[3].innerText = "$" + amt.toFixed(2);
+      subtotal += amt;
+    });
+    let tax = subtotal * 0.15;
+    let total = subtotal + tax;
+    document.getElementById("subtotal").innerText = "$" + subtotal.toFixed(2);
+    document.getElementById("tax").innerText = "$" + tax.toFixed(2);
+    document.getElementById("total").innerText = "$" + total.toFixed(2);
+  }
+  calc();
+</script>
+</body>
+</html>

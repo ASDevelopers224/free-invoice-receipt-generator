@@ -1,0 +1,1172 @@
+     <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js';
+        window.firebase = { initializeApp, getAuth };
+    </script>
+    <script type="module" src="script.js"></script>
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Invoice Generator</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .invoice-container {
+      background: #ffffff;
+      width: 100%;
+      max-width: 900px;
+      padding: 40px;
+      border: 1px solid #d1d5db;
+      border-radius: 15px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+      color: #1e293b;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #d1d5db;
+    }
+
+    .header h1 {
+      font-size: 2.2rem;
+      color: #1e40af;
+      text-transform: uppercase;
+      margin: 0;
+      letter-spacing: 1px;
+    }
+
+    .invoice-meta {
+      text-align: right;
+      font-size: 0.95rem;
+      color: #4b5563;
+    }
+
+    .invoice-meta p {
+      margin: 5px 0;
+      font-weight: 600;
+    }
+
+    .invoice-meta input {
+      width: 150px;
+      padding: 5px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      background: #f9fafb;
+      font-size: 0.95rem;
+    }
+
+    .section {
+      margin-bottom: 20px;
+    }
+
+    .section label {
+      display: block;
+      font-weight: 600;
+      color: #1e40af;
+      margin-bottom: 8px;
+    }
+
+    .section input,
+    .section select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      background: #f9fafb;
+      transition: border-color 0.3s;
+    }
+
+    .section input:focus,
+    .section select:focus {
+      border-color: #1e40af;
+      outline: none;
+    }
+
+    .invoice-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    .invoice-to {
+      margin-bottom: 20px;
+    }
+
+    .invoice-to label {
+      font-weight: 600;
+      color: #1e40af;
+    }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+    }
+
+    .items-table th,
+    .items-table td {
+      border: 1px solid #d1d5db;
+      padding: 12px;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    .items-table th {
+      background: #e5e7eb;
+      color: #1e40af;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+    }
+
+    .items-table td input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      font-size: 0.9rem;
+    }
+
+    .add-item-btn {
+      background: #1e40af;
+      color: #ffffff;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 15px;
+      font-weight: 600;
+      transition: background 0.3s, transform 0.2s;
+    }
+
+    .add-item-btn:hover {
+      background: #1e3a8a;
+      transform: translateY(-2px);
+    }
+
+    .totals-section {
+      margin-top: 20px;
+      text-align: right;
+      background: #f9fafb;
+      padding: 15px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+    }
+
+    .totals-section p {
+      margin: 8px 0;
+      font-weight: 600;
+      color: #1e293b;
+      font-size: 1.1rem;
+    }
+
+    .tax-inputs {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .tax-inputs input,
+    .tax-inputs select {
+      width: 100px;
+      padding: 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    .tax-toggle {
+      cursor: pointer;
+      color: #1e40af;
+      font-size: 0.9rem;
+      text-decoration: underline;
+    }
+
+    .buttons {
+      margin-top: 30px;
+      text-align: right;
+    }
+
+    .btn {
+      padding: 12px 25px;
+      margin-left: 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #ffffff;
+      font-weight: 600;
+      transition: background 0.3s, transform 0.2s;
+    }
+
+    .btn-generate {
+      background: #1e40af;
+    }
+
+    .btn-generate:hover {
+      background: #1e3a8a;
+      transform: translateY(-2px);
+    }
+
+    .btn-print {
+      background: #3b82f6;
+    }
+
+    .btn-print:hover {
+      background: #2563eb;
+      transform: translateY(-2px);
+    }
+
+    .btn-download {
+      background: #10b981;
+    }
+
+    .btn-download:hover {
+      background: #059669;
+      transform: translateY(-2px);
+    }
+
+    .btn-save {
+      background: #8b5cf6;
+    }
+
+    .btn-save:hover {
+      background: #7c3aed;
+      transform: translateY(-2px);
+    }
+
+    #invoice-preview {
+      display: none;
+      margin-top: 30px;
+      padding: 30px;
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 15px;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #invoice-preview,
+      #invoice-preview * {
+        visibility: visible;
+      }
+      #invoice-preview {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        max-width: 900px;
+        padding: 0;
+        margin: 0 auto;
+        box-shadow: none;
+        border: none;
+      }
+      .btn,
+      .add-item-btn {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<div class="floating-dashboard-btn" id="dashboardBtn" role="button" tabindex="0" aria-label="Go back to Dashboard">
+    <div class="btn-icon">
+        <i class="fas fa-arrow-left"></i>
+    </div>
+    <div class="btn-text">Dashboard</div>
+    <div class="btn-arrow"></div>
+</div>
+
+
+<script>
+(function() {
+    'use strict';
+    
+    // Check if we're not on dashboard page
+    const currentPath = window.location.pathname.toLowerCase();
+    const isDashboard = currentPath.includes('dashboard.html') || 
+                       document.body.classList.contains('dashboard-page');
+    
+    if (isDashboard) return;
+    
+    // Create button if not exists
+    let dashboardBtn = document.getElementById('dashboardBtn');
+    if (!dashboardBtn) {
+        dashboardBtn = document.createElement('div');
+        dashboardBtn.id = 'dashboardBtn';
+        dashboardBtn.className = 'floating-dashboard-btn';
+        dashboardBtn.innerHTML = `
+            <div class="btn-icon">
+                <i class="fas fa-arrow-left"></i>
+            </div>
+            <div class="btn-text">Dashboard</div>
+            <div class="btn-arrow"></div>
+        `;
+        dashboardBtn.setAttribute('role', 'button');
+        dashboardBtn.setAttribute('tabindex', '0');
+        dashboardBtn.setAttribute('aria-label', 'Go back to Dashboard');
+        document.body.appendChild(dashboardBtn);
+    }
+    
+    // Dashboard Button Class
+    class FloatingDashboardBtn {
+        constructor() {
+            this.btn = dashboardBtn;
+            this.isScrolled = false;
+            this.isLoading = false;
+            this.init();
+        }
+        
+        init() {
+            // Add entrance animation
+            setTimeout(() => this.btn.classList.add('show'), 200);
+            
+            // Event listeners
+            this.btn.addEventListener('click', (e) => this.handleClick(e));
+            this.btn.addEventListener('keydown', (e) => this.handleKeydown(e));
+            window.addEventListener('scroll', () => this.handleScroll());
+            this.btn.addEventListener('touchstart', (e) => this.handleTouchStart(e));
+            
+            // Initial scroll check
+            this.handleScroll();
+            
+            console.log('Dashboard button initialized');
+        }
+        
+        handleClick(e) {
+            e.preventDefault();
+            if (this.isLoading) return;
+            
+            // Click animation
+            this.btn.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.btn.style.transform = '';
+            }, 150);
+            
+            // Loading state
+            this.isLoading = true;
+            this.btn.classList.add('loading');
+            
+            // Navigate after delay
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 200);
+        }
+        
+        handleKeydown(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.handleClick(e);
+            }
+        }
+        
+        handleScroll() {
+            const scrollY = window.scrollY;
+            const shouldScroll = scrollY > 150;
+            
+            if (shouldScroll && !this.isScrolled) {
+                this.btn.classList.add('scrolled');
+                this.isScrolled = true;
+            } else if (!shouldScroll && this.isScrolled) {
+                this.btn.classList.remove('scrolled');
+                this.isScrolled = false;
+            }
+        }
+        
+        handleTouchStart(e) {
+            e.preventDefault();
+            this.btn.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.btn.style.transform = '';
+            }, 150);
+        }
+    }
+    
+    // Initialize after DOM loads
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            new FloatingDashboardBtn();
+        });
+    } else {
+        new FloatingDashboardBtn();
+    }
+    
+    // Hide button function
+    window.hideDashboardBtn = function() {
+        dashboardBtn.style.display = 'none';
+    };
+    
+})();
+</script>
+
+<style>
+/* Floating Dashboard Button Styles */
+.floating-dashboard-btn {
+    position: fixed;
+    top: 20px;
+    right: 1400px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transform: translateY(-20px) scale(0.8);
+    overflow: hidden;
+}
+
+.floating-dashboard-btn.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+    0% { 
+        opacity: 0; 
+        transform: translateY(-20px) scale(0.8); 
+    }
+    100% { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+    }
+}
+
+.floating-dashboard-btn:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.floating-dashboard-btn:active {
+    transform: scale(0.95);
+}
+
+.floating-dashboard-btn.scrolled {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { 
+        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3); 
+    }
+    50% { 
+        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.5); 
+    }
+}
+
+.floating-dashboard-btn.scrolled:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.floating-dashboard-btn .btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-bottom: 1px;
+    z-index: 2;
+    position: relative;
+}
+
+.floating-dashboard-btn .btn-icon i {
+    font-size: 1.3rem;
+    color: white;
+    transition: transform 0.3s ease;
+}
+
+.floating-dashboard-btn:hover .btn-icon i {
+    transform: translateX(-2px);
+}
+
+.floating-dashboard-btn .btn-text {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: white;
+    letter-spacing: 0.3px;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: all 0.3s ease;
+    text-align: center;
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 4px 8px;
+    border-radius: 4px;
+    min-width: 60px;
+}
+
+.floating-dashboard-btn:hover .btn-text {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.floating-dashboard-btn .btn-arrow {
+    position: absolute;
+    top: 50%;
+    left: -6px;
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-right: 8px solid #3b82f6;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 1;
+}
+
+.floating-dashboard-btn:hover .btn-arrow {
+    opacity: 1;
+    left: -12px;
+}
+
+.floating-dashboard-btn.scrolled .btn-arrow {
+    border-right-color: #ef4444;
+}
+
+.floating-dashboard-btn.scrolled:hover .btn-arrow {
+    border-right-color: #dc2626;
+}
+
+.floating-dashboard-btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.floating-dashboard-btn.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .floating-dashboard-btn {
+        width: 55px;
+        height: 55px;
+        top: 15px;
+        right: 15px;
+    }
+    
+    .floating-dashboard-btn .btn-icon i {
+        font-size: 1.2rem;
+    }
+    
+    .floating-dashboard-btn .btn-text {
+        font-size: 0.65rem;
+        bottom: -22px;
+        min-width: 55px;
+        padding: 3px 6px;
+    }
+    
+    .floating-dashboard-btn .btn-arrow {
+        border-top-width: 4px;
+        border-bottom-width: 4px;
+        border-right-width: 6px;
+        left: -5px;
+    }
+    
+    .floating-dashboard-btn:hover .btn-arrow {
+        left: -10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .floating-dashboard-btn {
+        width: 50px;
+        height: 50px;
+        top: 12px;
+        right: 12px;
+    }
+    
+    .floating-dashboard-btn .btn-icon {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .floating-dashboard-btn .btn-icon i {
+        font-size: 1.1rem;
+    }
+    
+    .floating-dashboard-btn .btn-text {
+        display: none;
+    }
+    
+    .floating-dashboard-btn .btn-arrow {
+        border-top-width: 3px;
+        border-bottom-width: 3px;
+        border-right-width: 5px;
+        left: -4px;
+    }
+    
+    .floating-dashboard-btn:hover .btn-arrow {
+        left: -8px;
+    }
+}
+
+/* Hide on dashboard */
+body.dashboard-page .floating-dashboard-btn {
+    display: none !important;
+}
+
+/* Accessibility */
+.floating-dashboard-btn:focus {
+    outline: 2px solid #fbbf24;
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .floating-dashboard-btn,
+    .floating-dashboard-btn * {
+        transition: none !important;
+        animation: none !important;
+    }
+    
+    .floating-dashboard-btn:hover {
+        transform: none;
+    }
+    
+    .floating-dashboard-btn:hover .btn-icon i {
+        transform: none;
+    }
+    
+    .floating-dashboard-btn:hover .btn-text {
+        transform: translateX(-50%);
+    }
+}
+
+/* Print */
+@media print {
+    .floating-dashboard-btn {
+        display: none !important;
+    }
+}
+</style>
+  <div class="invoice-container">
+    <div class="header">
+      <h1>Invoice</h1>
+      <div class="invoice-meta">
+        <p><strong>Invoice #:</strong> <input type="text" id="invoice-number" value="INV-2025-001" /></p>
+        <p><strong>Date:</strong> <input type="date" id="invoice-date" value="2025-09-08" /></p>
+      </div>
+    </div>
+
+    <div class="invoice-to">
+      <label for="customer-name">Invoice To:</label>
+      <br>
+      <br>
+      <div class="section">
+        <input type="text" id="customer-name" placeholder="Customer Name" />
+      </div>
+      <div class="section">
+        <input type="text" id="customer-address" placeholder="Customer Address" />
+      </div>
+    </div>
+
+    <div class="invoice-details">
+      <div class="section">
+        <label for="from">From (Company)</label>
+        <input type="text" id="from" placeholder="Your Company Name" />
+      </div>
+      <div class="section">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="Your Email" />
+      </div>
+      <div class="section">
+        <label for="number">Phone Number</label>
+        <input type="text" id="number" placeholder="Your Phone Number" />
+      </div>
+    </div>
+
+    <table class="items-table" id="items-table">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Price ($)</th>
+          <th>Qty.</th>
+          <th>Total ($)</th>
+        </tr>
+      </thead>
+      <tbody id="items-body">
+        <tr>
+          <td><input type="text" class="item-desc" placeholder="Item Description" /></td>
+          <td><input type="number" class="item-price" step="0.01" value="0.00" /></td>
+          <td><input type="number" class="item-qty" value="1" min="1" /></td>
+          <td class="item-total">0.00</td>
+        </tr>
+      </tbody>
+    </table>
+    <button class="add-item-btn" onclick="addItemRow()">Add Item</button>
+
+    <div class="totals-section" id="totals-section">
+      <p>Subtotal: $<span id="subtotal">0.00</span></p>
+      <div id="tax-section">
+        <div class="tax-inputs">
+          <select id="tax-type" onchange="updateTaxLabel()">
+            <option value="percentage">Percentage (%)</option>
+            <option value="fixed">Fixed Amount ($)</option>
+          </select>
+          <input type="number" id="tax-value" step="0.01" value="10" min="0" />
+        </div>
+        <p>Tax (<span id="tax-label">10%</span>): $<span id="tax">0.00</span></p>
+        <span class="tax-toggle" onclick="toggleTaxSection()">Remove Tax</span>
+      </div>
+      <p><strong>Grand Total: $<span id="total-amount">0.00</span></strong></p>
+    </div>
+
+    <div class="buttons">
+      <button class="btn btn-generate" onclick="generateInvoice()">Generate Invoice</button>
+      <button class="btn btn-print" onclick="printInvoice()" style="display: none;" id="print-btn">Print</button>
+      <button class="btn btn-download" onclick="downloadInvoice()" style="display: none;" id="download-btn">Download PDF</button>
+      <button class="btn btn-save" onclick="saveInvoice()" style="display: none;" id="save-btn">Save Invoice</button>
+    </div>
+
+    <div id="invoice-preview"></div>
+  </div>
+
+  
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  
+  <script type="module">
+      import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js';
+               import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js';
+
+        import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuu70xrZlnHW_6c2mgEy6hsU3Qr42iPbQ",
+            authDomain: "invoice-e9118.firebaseapp.com",
+            projectId: "invoice-e9118",
+            storageBucket: "invoice-e9118.firebasestorage.app",
+            messagingSenderId: "894646092614",
+            appId: "1:894646092614:web:a59b44598cce96b39e5b47",
+            measurementId: "G-4CYJGZ0ERJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+   
+
+  onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loadReceipts(user.uid);
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+</script>
+
+<script>
+   let taxEnabled = true;
+    function calculateTotals() {
+      const rows = document.querySelectorAll("#items-body tr");
+      let subtotal = 0;
+
+      rows.forEach(row => {
+        const qty = parseFloat(row.querySelector(".item-qty").value) || 0;
+        const price = parseFloat(row.querySelector(".item-price").value) || 0;
+        const total = qty * price;
+        row.querySelector(".item-total").innerText = total.toFixed(2);
+        subtotal += total;
+      });
+
+      let tax = 0;
+      if (taxEnabled) {
+        const taxType = document.getElementById("tax-type").value;
+        const taxValue = parseFloat(document.getElementById("tax-value").value) || 0;
+        tax = taxType === "percentage" ? subtotal * (taxValue / 100) : taxValue;
+      }
+
+      const totalAmount = subtotal + tax;
+
+      document.getElementById("subtotal").innerText = subtotal.toFixed(2);
+      document.getElementById("tax").innerText = tax.toFixed(2);
+      document.getElementById("total-amount").innerText = totalAmount.toFixed(2);
+    }
+
+    function updateTaxLabel() {
+      const taxType = document.getElementById("tax-type").value;
+      const taxValue = document.getElementById("tax-value").value;
+      document.getElementById("tax-label").innerText = taxType === "percentage" ? `${taxValue}%` : `$${taxValue}`;
+      calculateTotals();
+    }
+
+    function toggleTaxSection() {
+      const taxSection = document.getElementById("tax-section");
+      if (taxEnabled) {
+        taxSection.style.display = "none";
+        taxEnabled = false;
+        document.querySelector(".tax-toggle").innerText = "Add Tax";
+      } else {
+        taxSection.style.display = "block";
+        taxEnabled = true;
+        document.querySelector(".tax-toggle").innerText = "Remove Tax";
+      }
+      calculateTotals();
+    }
+
+    document.querySelectorAll(".item-qty, .item-price").forEach(input => {
+      input.addEventListener("input", calculateTotals);
+    });
+
+    document.getElementById("tax-value").addEventListener("input", () => {
+      updateTaxLabel();
+      calculateTotals();
+    });
+
+    document.getElementById("tax-type").addEventListener("change", () => {
+      updateTaxLabel();
+      calculateTotals();
+    });
+
+    function addItemRow() {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td><input type="text" class="item-desc" placeholder="Item Description" /></td>
+        <td><input type="number" class="item-price" step="0.01" value="0.00" /></td>
+        <td><input type="number" class="item-qty" value="1" min="1" /></td>
+        <td class="item-total">0.00</td>
+      `;
+      document.getElementById("items-body").appendChild(row);
+
+      row.querySelectorAll(".item-qty, .item-price").forEach(input => {
+        input.addEventListener("input", calculateTotals);
+      });
+
+      calculateTotals();
+    }
+
+    function generateInvoice() {
+      calculateTotals();
+      const preview = document.getElementById("invoice-preview");
+      const from = document.getElementById("from").value;
+      const email = document.getElementById("email").value;
+      const phonenumber = document.getElementById("number").value;
+      const customerName = document.getElementById("customer-name").value;
+      const customerAddress = document.getElementById("customer-address").value;
+      const invoiceNumber = document.getElementById("invoice-number").value;
+      const invoiceDate = document.getElementById("invoice-date").value;
+
+      const items = Array.from(document.querySelectorAll("#items-body tr")).map(row => {
+        return {
+          desc: row.querySelector(".item-desc").value,
+          price: row.querySelector(".item-price").value,
+          qty: row.querySelector(".item-qty").value,
+          total: row.querySelector(".item-total").innerText
+        };
+      }).filter(item => item.desc && item.price && item.qty);
+
+      if (!from || !email || !customerName || !customerAddress || items.length === 0) {
+        alert("Please fill all required fields and add at least one item.");
+        return;
+      }
+
+      let taxHTML = "";
+      if (taxEnabled) {
+        const taxLabel = document.getElementById("tax-label").innerText;
+        taxHTML = `<p style="margin: 8px 0;">Tax (${taxLabel}): $<span>${document.getElementById("tax").innerText}</span></p>`;
+      }
+
+      preview.innerHTML = `
+        <div style="border-bottom: 2px solid #d1d5db; padding-bottom: 15px; margin-bottom: 20px;">
+          <h1 style="font-size: 2rem; color: #1e40af; text-transform: uppercase; margin: 0;">Invoice</h1>
+          <div style="text-align: right; font-size: 0.9rem; color: #4b5563;">
+            <p style="margin: 5px 0;"><strong>Invoice #:</strong> ${invoiceNumber}</p>
+            <p style="margin: 5px 0;"><strong>Date:</strong> ${invoiceDate}</p>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+          <div>
+            <p style="margin: 5px 0; font-weight: 600;">Invoice To:</p>
+            <p style="margin: 5px 0;">${customerName}</p>
+            <p style="margin: 5px 0;">${customerAddress}</p>
+          </div>
+          <div style="text-align: right;">
+            <p style="margin: 5px 0; font-weight: 600; font-size: 1.1rem; color: #1f2937;">${from}</p>
+            <p style="margin: 5px 0; color: #4b5563;">${email} | ${phonenumber}</p>
+          </div>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+          <thead>
+            <tr>
+              <th style="background: #e5e7eb; color: #1e40af; padding: 12px; text-align: left; border: 1px solid #d1d5db; font-size: 0.85rem; font-weight: 600;">Description</th>
+              <th style="background: #e5e7eb; color: #1e40af; padding: 12px; text-align: left; border: 1px solid #d1d5db; font-size: 0.85rem; font-weight: 600;">Price ($)</th>
+              <th style="background: #e5e7eb; color: #1e40af; padding: 12px; text-align: left; border: 1px solid #d1d5db; font-size: 0.85rem; font-weight: 600;">Qty.</th>
+              <th style="background: #e5e7eb; color: #1e40af; padding: 12px; text-align: left; border: 1px solid #d1d5db; font-size: 0.85rem; font-weight: 600;">Total ($)</th>
+            </tr>
+          </thead>
+          <tbody>${items.map(item => `
+            <tr>
+              <td style="border: 1px solid #d1d5db; padding: 10px; font-size: 0.9rem;">${item.desc}</td>
+              <td style="border: 1px solid #d1d5db; padding: 10px; font-size: 0.9rem;">$${item.price}</td>
+              <td style="border: 1px solid #d1d5db; padding: 10px; font-size: 0.9rem;">${item.qty}</td>
+              <td style="border: 1px solid #d1d5db; padding: 10px; font-size: 0.9rem;">$${item.total}</td>
+            </tr>
+          `).join("")}</tbody>
+        </table>
+        <div style="margin-top: 20px; text-align: right; background: #f3f4f6; padding: 15px; border: 1px solid #d1d5db;">
+          <p style="margin: 8px 0;">Subtotal: $<span>${document.getElementById("subtotal").innerText}</span></p>
+          ${taxHTML}
+          <p style="margin: 8px 0; font-weight: 600;">Grand Total: $<span>${document.getElementById("total-amount").innerText}</span></p>
+        </div>
+        <p style="text-align: center; color: #4b5563; margin-top: 20px;">Thank you for your business!</p>
+      `;
+      preview.style.display = "block";
+      document.getElementById("print-btn").style.display = "inline-block";
+      document.getElementById("download-btn").style.display = "inline-block";
+      document.getElementById("save-btn").style.display = "inline-block";
+
+      console.log("Invoice Preview Content:", preview.innerHTML);
+    }
+
+
+
+// async function saveInvoice() {
+//   const from = document.getElementById("from").value;
+//   const email = document.getElementById("email").value;
+//   const phonenumber = document.getElementById("number").value;
+//   const customerName = document.getElementById("customer-name").value;
+//   const customerAddress = document.getElementById("customer-address").value;
+//   const invoiceNumber = document.getElementById("invoice-number").value;
+//   const invoiceDate = document.getElementById("invoice-date").value;
+//   const subtotal = document.getElementById("subtotal").innerText;
+//   const tax = taxEnabled ? document.getElementById("tax").innerText : "0.00";
+//   const totalAmount = document.getElementById("total-amount").innerText;
+//   const taxType = taxEnabled ? document.getElementById("tax-type").value : null;
+//   const taxValue = taxEnabled ? document.getElementById("tax-value").value : null;
+//   const taxLabel = taxEnabled ? document.getElementById("tax-label").innerText : null;
+
+//   const items = Array.from(document.querySelectorAll("#items-body tr")).map(row => {
+//     return {
+//       desc: row.querySelector(".item-desc").value,
+//       price: row.querySelector(".item-price").value,
+//       qty: row.querySelector(".item-qty").value,
+//       total: row.querySelector(".item-total").innerText
+//     };
+//   }).filter(item => item.desc && item.price && item.qty);
+
+//   if (!from || !email || !customerName || !customerAddress || items.length === 0) {
+//     alert("Please fill all required fields and add at least one item before saving.");
+//     return;
+//   }
+
+//   const user = auth.currentUser;
+//   if (!user) {
+//     alert("You must be logged in to save.");
+//     return;
+//   }
+
+//   const uid = user.uid;
+
+//   const invoiceData = {
+//     userId: uid,
+//     invoiceNumber,
+//     invoiceDate,
+//     from,
+//     email,
+//     phonenumber,
+//     customerName,
+//     customerAddress,
+//     items,
+//     subtotal,
+//     tax: taxEnabled ? { type: taxType, value: taxValue, label: taxLabel, amount: tax } : null,
+//     totalAmount,
+//     createdAt: serverTimestamp()
+//   };
+
+//   try {
+//     const docRef = await addDoc(collection(db, "invoices"), invoiceData);
+//     alert("Invoice saved successfully! ID: " + docRef.id);
+//     window.location.href = "manage-invoices.html";
+//   } catch (error) {
+//     console.error("Error saving invoice:", error);
+//     alert("Failed to save invoice. Please try again.");
+//   }
+// }
+
+    function printInvoice() {
+      window.print();
+    }
+
+    function downloadInvoice() {
+      const from = document.getElementById("from").value;
+      const email = document.getElementById("email").value;
+      const phonenumber = document.getElementById("number").value;
+      const customerName = document.getElementById("customer-name").value;
+      const customerAddress = document.getElementById("customer-address").value;
+      const invoiceNumber = document.getElementById("invoice-number").value;
+      const invoiceDate = document.getElementById("invoice-date").value;
+      const subtotal = document.getElementById("subtotal").innerText;
+      const tax = taxEnabled ? document.getElementById("tax").innerText : "0.00";
+      const taxLabel = taxEnabled ? document.getElementById("tax-label").innerText : "";
+      const totalAmount = document.getElementById("total-amount").innerText;
+
+      const items = Array.from(document.querySelectorAll("#items-body tr")).map(row => {
+        return {
+          desc: row.querySelector(".item-desc").value,
+          price: row.querySelector(".item-price").value,
+          qty: row.querySelector(".item-qty").value,
+          total: row.querySelector(".item-total").innerText
+        };
+      }).filter(item => item.desc && item.price && item.qty);
+
+      if (!from || !email || !customerName || !customerAddress || items.length === 0) {
+        alert("Please fill all required fields and add at least one item before downloading.");
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+      });
+
+      let y = 20;
+
+      // Header
+      doc.setFontSize(20);
+      doc.setFont("helvetica", "bold");
+      doc.text("INVOICE", 20, y);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Invoice #: ${invoiceNumber}`, 150, y);
+      y += 10;
+      doc.text(`Date: ${invoiceDate}`, 150, y);
+      y += 20;
+
+      // From and To
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("From:", 20, y);
+      y += 10;
+      doc.setFont("helvetica", "normal");
+      doc.text(from, 20, y);
+      y += 10;
+      doc.text(`${email} | ${phonenumber}`, 20, y);
+      y += 20;
+
+      doc.setFont("helvetica", "bold");
+      doc.text("Invoice To:", 20, y);
+      y += 10;
+      doc.setFont("helvetica", "normal");
+      doc.text(customerName, 20, y);
+      y += 10;
+      doc.text(customerAddress, 20, y);
+      y += 20;
+
+      // Items Table Header
+      doc.setFillColor(229, 231, 235);
+      doc.rect(20, y - 5, 170, 10, "F");
+      doc.setFont("helvetica", "bold");
+      doc.text("Description", 22, y);
+      doc.text("Price ($)", 90, y);
+      doc.text("Qty.", 130, y);
+      doc.text("Total ($)", 160, y);
+      y += 10;
+
+      // Items Table Rows
+      doc.setFont("helvetica", "normal");
+      items.forEach(item => {
+        doc.text(item.desc, 22, y);
+        doc.text(`$${parseFloat(item.price).toFixed(2)}`, 90, y);
+        doc.text(item.qty, 130, y);
+        doc.text(`$${item.total}`, 160, y);
+        y += 10;
+        // Draw row borders
+        doc.setDrawColor(209, 213, 219);
+        doc.line(20, y - 10, 190, y - 10);
+        doc.line(20, y - 10, 20, y);
+        doc.line(190, y - 10, 190, y);
+      });
+      doc.line(20, y, 190, y); // Bottom border
+      doc.line(88, y - items.length * 10, 88, y); // Vertical line for Price
+      doc.line(128, y - items.length * 10, 128, y); // Vertical line for Qty
+      doc.line(158, y - items.length * 10, 158, y); // Vertical line for Total
+      y += 10;
+
+      // Totals
+      doc.setFont("helvetica", "bold");
+      doc.text(`Subtotal: $${subtotal}`, 130, y);
+      y += 10;
+      if (taxEnabled) {
+        doc.text(`Tax (${taxLabel}): $${tax}`, 130, y);
+        y += 10;
+      }
+      doc.text(`Grand Total: $${totalAmount}`, 130, y);
+      y += 20;
+
+      // Footer
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text("Thank you for your business!", 105, y, { align: "center" });
+
+      // Page Numbers
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(10);
+        doc.text(`Page ${i} of ${totalPages}`, 105, 280, { align: "center" });
+      }
+
+      console.log("Starting PDF generation with jsPDF");
+      doc.save(`invoice-${invoiceNumber}.pdf`);
+      console.log("PDF generation complete");
+    }
+
+    window.onload = () => {
+      calculateTotals();
+      updateTaxLabel();
+    };
+  </script>
+</body>
+</html>

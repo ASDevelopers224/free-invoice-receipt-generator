@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Invoice & Receipt Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #e6f0fa, #ffffff);
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            height: 100%;
+            width: 100%;
+        }
+        .dashboard {
+            display: flex;
+            flex: 1;
+            height: 100vh;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #2c5282, #2a69ac);
+            color: white;
+            padding: 20px;
+            border-radius: 0 10px 0 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+            height: 100%;
+            margin: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        .sidebar:hover {
+            transform: scale(1.02);
+        }
+        .sidebar-title {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #f0f4f8;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+        .sidebar li {
+            margin: 20px 0;
+        }
+        .sidebar a {
+            color: white;
+            font-size: 1.2rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-radius: 5px;
+            transition: background 0.3s, color 0.3s;
+        }
+        .sidebar a i {
+            margin-right: 10px;
+        }
+        .sidebar a:hover {
+            background: #1e3a8a;
+            color: #fff;
+        }
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            background: #ffffff;
+            border-radius: 0 0 0 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            height: 100%;
+            width: calc(100% - 250px);
+            margin-left: 250px; /* Matches sidebar width */
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .user-info i {
+            font-size: 2rem;
+            color: #2a69ac;
+            margin-right: 10px;
+        }
+        .user-info span {
+            font-size: 1.5rem;
+            color: #2a69ac;
+            font-weight: 600;
+        }
+        .title {
+            color: #2a69ac;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            justify-content: space-between;
+            width: 100%;
+        }
+        .stat-box {
+            background: #e6f0fa;
+            padding: 20px;
+            border-radius: 15px;
+            color: #2a69ac;
+            font-weight: 600;
+            width: 48%;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+            box-sizing: border-box;
+        }
+        .stat-box:hover {
+            transform: scale(1.05);
+        }
+        .stat-box span {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .stat-box .label {
+            font-size: 1.1rem;
+            color: #555;
+        }
+        #content-area {
+            margin-top: 20px;
+            height: calc(100% - 140px); /* Adjusted for user info */
+            overflow-y: auto;
+            width: 100%;
+        }
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #f9fbff;
+        }
+        .history-table th, .history-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e6f0fa;
+        }
+        .history-table th {
+            background: #2a69ac;
+            color: white;
+        }
+        .footer {
+            background: #2c5282;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 0.9rem;
+            margin-top: auto;
+            border-radius: 0 0 10px 0;
+            width: 100%;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+                position: fixed;
+                height: 100%;
+                z-index: 1000;
+            }
+            .main-content {
+                width: 100%;
+                margin-left: 0;
+                padding: 20px;
+                margin-top: 60px; /* Space for sidebar toggle if needed */
+            }
+            .stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .stat-box {
+                width: 100%;
+            }
+            .user-info i {
+                font-size: 1.5rem;
+            }
+            .user-info span {
+                font-size: 1.2rem;
+            }
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            /* Optional: Add a hamburger menu for mobile */
+            .menu-toggle {
+                display: block;
+                font-size: 1.5rem;
+                background: #2a69ac;
+                color: white;
+                border: none;
+                padding: 10px;
+                cursor: pointer;
+                position: fixed;
+                top: 10px;
+                left: 10px;
+                z-index: 1001;
+                border-radius: 5px;
+            }
+            .menu-toggle i {
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+      <button class="menu-toggle"><i class="fas fa-bars"></i></button>
+
+        <div class="sidebar">
+            <h2 class="sidebar-title">Dashboard</h2>
+            <ul>
+                <li><a href="create-invoice.html" id="create-invoice"><i class="fas fa-file-invoice"></i> Create Invoice</a></li>
+                <li><a href="create-receipt.html" id="create-receipt"><i class="fas fa-receipt"></i> Create Receipt</a></li>
+                <li><a href="manage-invoices.html" id="manage-invoices"><i class="fas fa-file-invoice"></i> Manage Invoice</a></li>
+                <li><a href="manage-receipts.html" id="manage-receipts"><i class="fas fa-receipt"></i> Manage Receipt</a></li>
+               <li><a href="#" id="logout" onclick="logout(event)"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                <li><a href="profile.html" id="profile"><i class="fas fa-user"></i> Profile</a></li>
+            </ul>
+        </div>
+        <div class="main-content">
+            <div class="user-info">
+                <i class="fas fa-user"></i>
+                <span id="user-name"></span>
+            </div>
+            <h1 class="title">Welcome to Your Dashboard! 🎉</h1>
+            <div class="stats">
+                <div class="stat-box">
+                    <span id="invoice-count">0</span>
+                    <div class="label">Number of Invoices</div>
+                </div>
+                <div class="stat-box">
+                    <span id="receipt-count">0</span>
+                    <div class="label">Number of Receipts</div>
+                </div>
+            </div>
+            <div id="content-area">
+                <h2>History</h2>
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>ID</th>
+                            <th>Client</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <!-- Data will be populated here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        Designed and Developed by AS Developers
+    </div>
+
+    <!-- Firebase SDK (Modular) -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js';
+        import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuu70xrZlnHW_6c2mgEy6hsU3Qr42iPbQ",
+            authDomain: "invoice-e9118.firebaseapp.com",
+            projectId: "invoice-e9118",
+            storageBucket: "invoice-e9118.firebasestorage.app",
+            messagingSenderId: "894646092614",
+            appId: "1:894646092614:web:a59b44598cce96b39e5b47",
+            measurementId: "G-4CYJGZ0ERJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+
+import { getDoc, doc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        const uid = user.uid;
+
+        // Firestore se user data fetch karo
+        const userDoc = await getDoc(doc(db, "users", uid));
+        if (userDoc.exists()) {
+            const data = userDoc.data();
+            document.getElementById('user-name').textContent = data.ownerName || "User";
+            fetchUserData(uid); // Fetch and display user-specific data
+        } else {
+            document.getElementById('user-name').textContent = "User";
+        }
+    } else {
+        // logged out
+        document.getElementById('user-name').textContent = "Guest";
+    }
+});
+
+
+        async function fetchUserData(uid) {
+            const tableBody = document.getElementById('historyTableBody');
+            tableBody.innerHTML = ''; // Clear existing rows
+            let invoiceCount = 0;
+            let receiptCount = 0;
+
+            try {
+                // Fetch invoices for the user
+                const invoiceQuery = query(collection(db, "invoices"), where("userId", "==", uid));
+                const invoiceSnapshot = await getDocs(invoiceQuery);
+                invoiceSnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>Invoice</td>
+                        <td>${data.invoiceNumber || 'N/A'}</td>
+                        <td>${data.customerName || 'N/A'}</td>
+                        <td>$${parseFloat(data.totalAmount || 0).toFixed(2)}</td>
+                        <td>${data.invoiceDate || 'N/A'}</td>
+                    `;
+                    tableBody.appendChild(row);
+                    invoiceCount++;
+                });
+
+                // Fetch receipts for the user
+                const receiptQuery = query(collection(db, "receipts"), where("userId", "==", uid));
+                const receiptSnapshot = await getDocs(receiptQuery);
+                receiptSnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>Receipt</td>
+                        <td>${data.receiptNumber || 'N/A'}</td>
+                        <td>${data.customerName || 'N/A'}</td>
+                        <td>$${parseFloat(data.totalAmount || 0).toFixed(2)}</td>
+                        <td>${data.receiptDate || 'N/A'}</td>
+                    `;
+                    tableBody.appendChild(row);
+                    receiptCount++;
+                });
+
+                // Update stat boxes
+                document.getElementById('invoice-count').textContent = invoiceCount;
+                document.getElementById('receipt-count').textContent = receiptCount;
+
+                console.log("User data populated successfully");
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+                tableBody.innerHTML = '<tr><td colspan="5">Error loading data. Check console for details.</td></tr>';
+            }
+        }
+        // Logout function
+async function logout(event) {
+    event.preventDefault(); // Prevent default link behavior
+    try {
+        await getAuth().signOut(); // Sign out the user
+        console.log("User logged out successfully");
+        window.location.href = 'index.html'; // Redirect to login page
+    } catch (error) {
+        console.error("Error during logout:", error);
+        alert("Failed to logout. Please try again. Error: " + error.message);
+    }
+}
+
+// Add event listener to logout link (optional fallback)
+document.getElementById('logout').addEventListener('click', logout);
+// Sidebar toggle function for mobile
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('active');
+}
+
+// Event listener lagao instead of inline onclick
+document.querySelector('.menu-toggle').addEventListener('click', toggleSidebar);
+
+    </script>
+    <script type="module" src="script.js"></script>
+</body>
+</html>

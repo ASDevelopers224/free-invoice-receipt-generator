@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Invoice & Receipt Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #e6f0fa, #ffffff);
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .profile-container {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            width: 500px;
+            text-align: center;
+        }
+        .title {
+            color: #2a69ac;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        input {
+            padding: 12px;
+            border: 2px solid #e6f0fa;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            border-color: #2a69ac;
+            outline: none;
+        }
+        .btn {
+            padding: 12px;
+            background: #2a69ac;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #1e3a8a;
+        }
+        a {
+            color: #2a69ac;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <h1 class="title">Update Profile</h1>
+        <form id="profile-form">
+            <input type="text" id="company-name" placeholder="Company Name" required>
+            <input type="text" id="owner-name" placeholder="Owner Name" required>
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="text" id="company-address" placeholder="Company Address" required>
+            <input type="text" id="owner-phone" placeholder="Owner Phone" required>
+            <button type="submit" class="btn">Save Changes</button>
+        </form>
+        <p><a href="dashboard.html">Back to Dashboard</a></p>
+    </div>
+    <!-- Firebase SDK (Modular) -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js';
+        import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuu70xrZlnHW_6c2mgEy6hsU3Qr42iPbQ",
+            authDomain: "invoice-e9118.firebaseapp.com",
+            projectId: "invoice-e9118",
+            storageBucket: "invoice-e9118.firebasestorage.app",
+            messagingSenderId: "894646092614",
+            appId: "1:894646092614:web:a59b44598cce96b39e5b47",
+            measurementId: "G-4CYJGZ0ERJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const uid = user.uid;
+                getDoc(doc(db, 'users', uid)).then((docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        document.getElementById('company-name').value = data.companyName || '';
+                        document.getElementById('owner-name').value = data.ownerName || '';
+                        document.getElementById('email').value = data.email || '';
+                        document.getElementById('company-address').value = data.companyAddress || '';
+                        document.getElementById('owner-phone').value = data.ownerPhone || '';
+                    }
+                }).catch((error) => {
+                    console.error('Error fetching profile data:', error);
+                });
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (user) {
+                const uid = user.uid;
+                const updatedData = {
+                    companyName: document.getElementById('company-name').value,
+                    ownerName: document.getElementById('owner-name').value,
+                    email: document.getElementById('email').value,
+                    companyAddress: document.getElementById('company-address').value,
+                    ownerPhone: document.getElementById('owner-phone').value,
+                    updatedAt: serverTimestamp()
+                };
+
+                try {
+                    await setDoc(doc(db, 'users', uid), updatedData, { merge: true });
+                    alert('Profile updated successfully!');
+                } catch (error) {
+                    console.error('Error updating profile:', error);
+                    alert('Error updating profile. Please try again.');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

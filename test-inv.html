@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- html2pdf -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      background: #f4f8fc;
+      color: #1f2937;
+      padding: 20px;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
+    .panel {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+    h2 {
+      margin-top: 0;
+      font-size: 18px;
+      color: #2563eb;
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 6px;
+    }
+    label {
+      font-size: 12px;
+      color: #374151;
+      margin-bottom: 4px;
+      display: block;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+    th, td {
+      border: 1px solid #e5e7eb;
+      padding: 8px;
+      text-align: center;
+      font-size: 14px;
+    }
+    th {
+      background: #2563eb;
+      color: white;
+      font-weight: 600;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 4px 2px;
+    }
+    button:hover {
+      background: #1e40af;
+    }
+    .invoice-preview {
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+    .header {
+      background: #2563eb;
+      color: white;
+      padding: 20px;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .company h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+    .meta {
+      text-align: right;
+    }
+    .details {
+      margin: 20px 0;
+    }
+    .totals {
+      text-align: right;
+      margin-top: 20px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #2563eb;
+    }
+    @media print {
+      body { background: white; }
+      .container { display: block; }
+      .panel { display: none; }
+      .invoice-preview { box-shadow: none; border: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Left Panel (Form) -->
+    <div class="panel">
+      <h2>Invoice Form</h2>
+      <label>Company Name</label>
+      <input type="text" id="company" value="A&S Tech Solution">
+      <label>Owner Name</label>
+      <input type="text" id="owner" value="Saad Ahmed">
+      <label>Client Name</label>
+      <input type="text" id="client" placeholder="Client Name">
+      <label>Invoice Number</label>
+      <input type="text" id="invoiceNo" value="INV-001">
+      <label>Invoice Date</label>
+      <input type="date" id="date">
+      <label>Notes</label>
+      <textarea id="notes" placeholder="Additional notes..."></textarea>
+
+      <h2>Items</h2>
+      <table id="itemsTable">
+        <thead>
+          <tr>
+            <th>Item</th><th>Qty</th><th>Price</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="itemsBody">
+          <tr>
+            <td><input type="text" value="Web Design"></td>
+            <td><input type="number" value="2"></td>
+            <td><input type="number" value="500"></td>
+            <td><button type="button" onclick="removeRow(this)">X</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <button type="button" onclick="addRow()">+ Add Item</button>
+
+      <h2>Actions</h2>
+      <button type="button" onclick="updatePreview()">Preview</button>
+      <button type="button" onclick="downloadPDF()">Download</button>
+      <button type="button" onclick="window.print()">Print</button>
+    </div>
+
+    <!-- Right Panel (Preview) -->
+    <div class="invoice-preview" id="invoice">
+      <div class="header">
+        <div class="company">
+          <h1 id="prevCompany">A&S Tech Solution</h1>
+          <p id="prevOwner">Owner: Saad Ahmed</p>
+        </div>
+        <div class="meta">
+          <p><b>Invoice No:</b> <span id="prevInvoiceNo">INV-001</span></p>
+          <p><b>Date:</b> <span id="prevDate"></span></p>
+        </div>
+      </div>
+
+      <div class="details">
+        <p><b>Bill To:</b> <span id="prevClient"></span></p>
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+        </thead>
+        <tbody id="prevItems"></tbody>
+      </table>
+
+      <div class="totals">
+        <p>Grand Total: $<span id="prevTotal">0</span></p>
+      </div>
+
+      <p id="prevNotes"></p>
+    </div>
+  </div>
+
+  <script>
+    function addRow() {
+      const row = `
+        <tr>
+          <td><input type="text" placeholder="Item"></td>
+          <td><input type="number" value="1"></td>
+          <td><input type="number" value="0"></td>
+          <td><button type="button" onclick="removeRow(this)">X</button></td>
+        </tr>`;
+      document.getElementById("itemsBody").insertAdjacentHTML("beforeend", row);
+    }
+    function removeRow(btn) {
+      btn.closest("tr").remove();
+    }
+    function updatePreview() {
+      document.getElementById("prevCompany").innerText = document.getElementById("company").value;
+      document.getElementById("prevOwner").innerText = "Owner: " + document.getElementById("owner").value;
+      document.getElementById("prevClient").innerText = document.getElementById("client").value;
+      document.getElementById("prevInvoiceNo").innerText = document.getElementById("invoiceNo").value;
+      document.getElementById("prevDate").innerText = document.getElementById("date").value;
+      document.getElementById("prevNotes").innerText = document.getElementById("notes").value;
+
+      const body = document.getElementById("prevItems");
+      body.innerHTML = "";
+      let total = 0;
+      document.querySelectorAll("#itemsBody tr").forEach(tr => {
+        const item = tr.querySelector("td:nth-child(1) input").value;
+        const qty = parseFloat(tr.querySelector("td:nth-child(2) input").value);
+        const price = parseFloat(tr.querySelector("td:nth-child(3) input").value);
+        const rowTotal = qty * price;
+        total += rowTotal;
+        body.innerHTML += `<tr>
+          <td>${item}</td><td>${qty}</td><td>$${price}</td><td>$${rowTotal}</td>
+        </tr>`;
+      });
+      document.getElementById("prevTotal").innerText = total.toFixed(2);
+    }
+    function downloadPDF() {
+      updatePreview();
+      const element = document.getElementById("invoice");
+      html2pdf().from(element).save("invoice.pdf");
+    }
+  </script>
+</body>
+</html>

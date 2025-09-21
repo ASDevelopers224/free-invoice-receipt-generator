@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Receipts - Receipt Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #e6f0fa, #ffffff);
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            height: 100%;
+            width: 100%;
+        }
+        .manage-container {
+            flex: 1;
+            padding: 40px;
+            background: #ffffff;
+            border-radius: 0 0 0 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        .title {
+            color: #2a69ac;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .receipts-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #f9fbff;
+        }
+        .receipts-table th, .receipts-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e6f0fa;
+        }
+        .receipts-table th {
+            background: #2a69ac;
+            color: white;
+        }
+        .btn {
+            padding: 8px 16px;
+            background: #2a69ac;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-right: 5px;
+        }
+        .btn:hover {
+            background: #1e3a8a;
+        }
+        .btn-delete {
+            background: #e74c3c;
+        }
+        .btn-delete:hover {
+            background: #c0392b;
+        }
+        #receipt-preview {
+            margin-top: 20px;
+            padding: 15px;
+            background: #ffffff;
+            border: 1px solid #2a69ac;
+            border-radius: 10px;
+            display: none;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            width: 400px;
+        }
+        #receipt-preview h2 {
+            text-align: center;
+            color: #2a69ac;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        #receipt-preview .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        #receipt-preview table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+        #receipt-preview th, #receipt-preview td {
+            padding: 6px;
+            border: 1px solid #2a69ac;
+        }
+        #receipt-preview th {
+            background: #2a69ac;
+            color: white;
+        }
+        #receipt-preview td {
+            color: #555;
+        }
+        #receipt-preview .total {
+            text-align: right;
+            font-weight: 600;
+            color: #2a69ac;
+            font-size: 1rem;
+            border-top: 1px solid #2a69ac;
+        }
+        #receipt-preview .footer {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #888;
+        }
+        #receipt-preview .barcode {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: #f9fbff;
+        }
+        .items-table th, .items-table td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #2a69ac;
+        }
+        .items-table th {
+            background: #2a69ac;
+            color: white;
+        }
+        .items-table td input {
+            width: 100%;
+            border: none;
+            background: transparent;
+        }
+        .add-item {
+            padding: 8px 15px;
+            background: #2a69ac;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        .add-item:hover {
+            background: #1e3a8a;
+        }
+        .total {
+            margin-top: 15px;
+            text-align: right;
+            font-size: 1.2rem;
+            color: #2a69ac;
+            font-weight: 600;
+            border-top: 1px solid #2a69ac;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #receipt-preview, #receipt-preview * {
+                visibility: visible;
+            }
+            #receipt-preview {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 400px;
+                border: none;
+                box-shadow: none;
+                background: white;
+                padding: 15px;
+                margin: 0 auto;
+            }
+            #edit-btn, #save-btn, #print-btn, #download-btn, .add-item, .btn-delete, a {
+                display: none !important;
+                visibility: hidden !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<div class="floating-dashboard-btn" id="dashboardBtn" role="button" tabindex="0" aria-label="Go back to Dashboard">
+    <div class="btn-icon">
+        <i class="fas fa-arrow-left"></i>
+    </div>
+    <div class="btn-text">Dashboard</div>
+    <div class="btn-arrow"></div>
+</div>
+
+
+<script>
+(function() {
+    'use strict';
+    
+    // Check if we're not on dashboard page
+    const currentPath = window.location.pathname.toLowerCase();
+    const isDashboard = currentPath.includes('dashboard.html') || 
+                       document.body.classList.contains('dashboard-page');
+    
+    if (isDashboard) return;
+    
+    // Create button if not exists
+    let dashboardBtn = document.getElementById('dashboardBtn');
+    if (!dashboardBtn) {
+        dashboardBtn = document.createElement('div');
+        dashboardBtn.id = 'dashboardBtn';
+        dashboardBtn.className = 'floating-dashboard-btn';
+        dashboardBtn.innerHTML = `
+            <div class="btn-icon">
+                <i class="fas fa-arrow-left"></i>
+            </div>
+            <div class="btn-text">Dashboard</div>
+            <div class="btn-arrow"></div>
+        `;
+        dashboardBtn.setAttribute('role', 'button');
+        dashboardBtn.setAttribute('tabindex', '0');
+        dashboardBtn.setAttribute('aria-label', 'Go back to Dashboard');
+        document.body.appendChild(dashboardBtn);
+    }
+    
+    // Dashboard Button Class
+    class FloatingDashboardBtn {
+        constructor() {
+            this.btn = dashboardBtn;
+            this.isScrolled = false;
+            this.isLoading = false;
+            this.init();
+        }
+        
+        init() {
+            // Add entrance animation
+            setTimeout(() => this.btn.classList.add('show'), 200);
+            
+            // Event listeners
+            this.btn.addEventListener('click', (e) => this.handleClick(e));
+            this.btn.addEventListener('keydown', (e) => this.handleKeydown(e));
+            window.addEventListener('scroll', () => this.handleScroll());
+            this.btn.addEventListener('touchstart', (e) => this.handleTouchStart(e));
+            
+            // Initial scroll check
+            this.handleScroll();
+            
+            console.log('Dashboard button initialized');
+        }
+        
+        handleClick(e) {
+            e.preventDefault();
+            if (this.isLoading) return;
+            
+            // Click animation
+            this.btn.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.btn.style.transform = '';
+            }, 150);
+            
+            // Loading state
+            this.isLoading = true;
+            this.btn.classList.add('loading');
+            
+            // Navigate after delay
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 200);
+        }
+        
+        handleKeydown(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.handleClick(e);
+            }
+        }
+        
+        handleScroll() {
+            const scrollY = window.scrollY;
+            const shouldScroll = scrollY > 150;
+            
+            if (shouldScroll && !this.isScrolled) {
+                this.btn.classList.add('scrolled');
+                this.isScrolled = true;
+            } else if (!shouldScroll && this.isScrolled) {
+                this.btn.classList.remove('scrolled');
+                this.isScrolled = false;
+            }
+        }
+        
+        handleTouchStart(e) {
+            e.preventDefault();
+            this.btn.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.btn.style.transform = '';
+            }, 150);
+        }
+    }
+    
+    // Initialize after DOM loads
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            new FloatingDashboardBtn();
+        });
+    } else {
+        new FloatingDashboardBtn();
+    }
+    
+    // Hide button function
+    window.hideDashboardBtn = function() {
+        dashboardBtn.style.display = 'none';
+    };
+    
+})();
+</script>
+
+<style>
+/* Floating Dashboard Button Styles */
+.floating-dashboard-btn {
+    position: fixed;
+    top: 20px;
+    right: 1400px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transform: translateY(-20px) scale(0.8);
+    overflow: hidden;
+}
+
+.floating-dashboard-btn.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+    0% { 
+        opacity: 0; 
+        transform: translateY(-20px) scale(0.8); 
+    }
+    100% { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+    }
+}
+
+.floating-dashboard-btn:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.floating-dashboard-btn:active {
+    transform: scale(0.95);
+}
+
+.floating-dashboard-btn.scrolled {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { 
+        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3); 
+    }
+    50% { 
+        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.5); 
+    }
+}
+
+.floating-dashboard-btn.scrolled:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.floating-dashboard-btn .btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-bottom: 1px;
+    z-index: 2;
+    position: relative;
+}
+
+.floating-dashboard-btn .btn-icon i {
+    font-size: 1.3rem;
+    color: white;
+    transition: transform 0.3s ease;
+}
+
+.floating-dashboard-btn:hover .btn-icon i {
+    transform: translateX(-2px);
+}
+
+.floating-dashboard-btn .btn-text {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: white;
+    letter-spacing: 0.3px;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: all 0.3s ease;
+    text-align: center;
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 4px 8px;
+    border-radius: 4px;
+    min-width: 60px;
+}
+
+.floating-dashboard-btn:hover .btn-text {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.floating-dashboard-btn .btn-arrow {
+    position: absolute;
+    top: 50%;
+    left: -6px;
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-right: 8px solid #3b82f6;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 1;
+}
+
+.floating-dashboard-btn:hover .btn-arrow {
+    opacity: 1;
+    left: -12px;
+}
+
+.floating-dashboard-btn.scrolled .btn-arrow {
+    border-right-color: #ef4444;
+}
+
+.floating-dashboard-btn.scrolled:hover .btn-arrow {
+    border-right-color: #dc2626;
+}
+
+.floating-dashboard-btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.floating-dashboard-btn.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .floating-dashboard-btn {
+        width: 55px;
+        height: 55px;
+        top: 15px;
+        right: 15px;
+    }
+    
+    .floating-dashboard-btn .btn-icon i {
+        font-size: 1.2rem;
+    }
+    
+    .floating-dashboard-btn .btn-text {
+        font-size: 0.65rem;
+        bottom: -22px;
+        min-width: 55px;
+        padding: 3px 6px;
+    }
+    
+    .floating-dashboard-btn .btn-arrow {
+        border-top-width: 4px;
+        border-bottom-width: 4px;
+        border-right-width: 6px;
+        left: -5px;
+    }
+    
+    .floating-dashboard-btn:hover .btn-arrow {
+        left: -10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .floating-dashboard-btn {
+        width: 50px;
+        height: 50px;
+        top: 12px;
+        right: 12px;
+    }
+    
+    .floating-dashboard-btn .btn-icon {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .floating-dashboard-btn .btn-icon i {
+        font-size: 1.1rem;
+    }
+    
+    .floating-dashboard-btn .btn-text {
+        display: none;
+    }
+    
+    .floating-dashboard-btn .btn-arrow {
+        border-top-width: 3px;
+        border-bottom-width: 3px;
+        border-right-width: 5px;
+        left: -4px;
+    }
+    
+    .floating-dashboard-btn:hover .btn-arrow {
+        left: -8px;
+    }
+}
+
+/* Hide on dashboard */
+body.dashboard-page .floating-dashboard-btn {
+    display: none !important;
+}
+
+/* Accessibility */
+.floating-dashboard-btn:focus {
+    outline: 2px solid #fbbf24;
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .floating-dashboard-btn,
+    .floating-dashboard-btn * {
+        transition: none !important;
+        animation: none !important;
+    }
+    
+    .floating-dashboard-btn:hover {
+        transform: none;
+    }
+    
+    .floating-dashboard-btn:hover .btn-icon i {
+        transform: none;
+    }
+    
+    .floating-dashboard-btn:hover .btn-text {
+        transform: translateX(-50%);
+    }
+}
+
+/* Print */
+@media print {
+    .floating-dashboard-btn {
+        display: none !important;
+    }
+}
+</style>
+    <div class="manage-container">
+        <h1 class="title">Manage Receipts</h1>
+        <table class="receipts-table" id="receipts-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Client</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="receipts-body">
+                <!-- Receipts will be loaded here -->
+            </tbody>
+        </table>
+        <div id="receipt-preview">
+            <h2>Receipt</h2>
+            <div class="header">
+                <div>
+                    <p><strong>Client:</strong> <span id="preview-client"></span></p>
+                    <p><strong>Date:</strong> <span id="preview-date"></span></p>
+                    <p><strong>Payment Method:</strong> <span id="preview-payment-method"></span></p>
+                </div>
+                <div>
+                    <p><strong>Receipt ID:</strong> <span id="preview-id"></span></p>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody id="preview-items"></tbody>
+            </table>
+            <div class="total">
+                <p>Total Amount: $<span id="preview-total"></span></p>
+            </div>
+            <div class="footer">
+                Software Designed by AS Developers
+            </div>
+            <div class="barcode">
+                <svg id="barcode"></svg>
+            </div>
+            <button type="button" class="btn" id="edit-btn" onclick="toggleEditMode()">Edit</button>
+            <button type="button" class="btn" id="save-btn" style="display: none;" onclick="saveEditedReceipt()">Save Changes</button>
+            <button type="button" class="btn" id="print-btn" onclick="printReceipt()">Print Receipt</button>
+            <button type="button" class="btn" id="download-btn" onclick="downloadReceipt()">Download PDF</button>
+            <button type="button" class="add-item" id="add-item-btn" style="display: none;" onclick="addEditItemRow()">Add Item <i class="fas fa-plus"></i></button>
+        </div>
+        <p><a href="dashboard.html">Back to Dashboard</a></p>
+    </div>
+    <!-- jsPDF and JsBarcode for PDF generation and barcode -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <!-- Firebase SDK (Modular) -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js';
+        import { getFirestore, collection, getDocs, deleteDoc, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuu70xrZlnHW_6c2mgEy6hsU3Qr42iPbQ",
+            authDomain: "invoice-e9118.firebaseapp.com",
+            projectId: "invoice-e9118",
+            storageBucket: "invoice-e9118.firebasestorage.app",
+            messagingSenderId: "894646092614",
+            appId: "1:894646092614:web:a59b44598cce96b39e5b47",
+            measurementId: "G-4CYJGZ0ERJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentEditId = null;
+        let isEditMode = false;
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loadReceipts(user.uid);
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        async function loadReceipts(uid) {
+            const receiptsBody = document.getElementById('receipts-body');
+            receiptsBody.innerHTML = '';
+            const querySnapshot = await getDocs(collection(db, 'receipts'));
+            querySnapshot.forEach((docSnap) => {
+                if (docSnap.data().userId === uid) {
+                    const data = docSnap.data();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${docSnap.id}</td>
+                        <td>${data.clientName}</td>
+                        <td>${data.receiptDate}</td>
+                        <td>$${data.totalAmount.toFixed(2)}</td>
+                        <td>
+                            <button class="btn" onclick="editReceipt('${docSnap.id}')">Preview/Edit</button>
+                            <button class="btn btn-delete" onclick="deleteReceipt('${docSnap.id}')">Delete</button>
+                        </td>
+                    `;
+                    receiptsBody.appendChild(row);
+                }
+            });
+        }
+
+        window.editReceipt = async function(id) {
+            currentEditId = id;
+            const receiptDoc = await getDoc(doc(db, 'receipts', id));
+            if (receiptDoc.exists()) {
+                const data = receiptDoc.data();
+                document.getElementById('preview-client').textContent = data.clientName || '';
+                document.getElementById('preview-date').textContent = data.receiptDate || '';
+                document.getElementById('preview-payment-method').textContent = data.paymentMethod || '';
+                document.getElementById('preview-id').textContent = data.receiptId || id;
+                const previewItems = document.getElementById('preview-items');
+                previewItems.innerHTML = '';
+                (data.items || []).forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.description || ''}</td>
+                        <td>${item.quantity || 1}</td>
+                        <td>$${item.price?.toFixed(2) || '0.00'}</td>
+                        <td>$${((item.quantity || 0) * (item.price || 0)).toFixed(2)}</td>
+                    `;
+                    previewItems.appendChild(row);
+                });
+                document.getElementById('preview-total').textContent = data.totalAmount?.toFixed(2) || '0.00';
+                JsBarcode("#barcode", data.receiptId || id, {
+                    format: "CODE128",
+                    width: 2,
+                    height: 30,
+                    displayValue: true
+                });
+                document.getElementById('receipt-preview').style.display = 'block';
+                document.getElementById('edit-btn').style.display = 'inline-block';
+                document.getElementById('print-btn').style.display = 'inline-block';
+                document.getElementById('download-btn').style.display = 'inline-block';
+                document.getElementById('add-item-btn').style.display = 'none';
+                document.getElementById('save-btn').style.display = 'none';
+                isEditMode = false;
+            } else {
+                alert('Receipt not found!');
+            }
+        };
+
+        window.toggleEditMode = function() {
+            if (!isEditMode) {
+                const clientName = document.getElementById('preview-client').textContent;
+                const receiptDate = document.getElementById('preview-date').textContent;
+                const paymentMethod = document.getElementById('preview-payment-method').textContent;
+                const items = Array.from(document.querySelectorAll('#preview-items tr')).map(row => {
+                    const cells = row.querySelectorAll('td');
+                    return {
+                        description: cells[0].textContent,
+                        quantity: parseInt(cells[1].textContent),
+                        price: parseFloat(cells[2].textContent.replace('$', ''))
+                    };
+                });
+
+                const previewItems = document.getElementById('preview-items');
+                previewItems.innerHTML = '';
+                items.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><input type="text" class="item-desc" value="${item.description}" placeholder="Item Description"></td>
+                        <td><input type="number" class="item-qty" value="${item.quantity}" min="1"></td>
+                        <td><input type="number" class="item-price" step="0.01" value="${item.price.toFixed(2)}"></td>
+                        <td class="item-total">${(item.quantity * item.price).toFixed(2)}</td>
+                        <td><button type="button" onclick="removeItemRow(this)">Remove</button></td>
+                    `;
+                    previewItems.appendChild(row);
+                    row.querySelectorAll('.item-qty, .item-price').forEach(input => {
+                        input.addEventListener('input', updateEditTotals);
+                    });
+                });
+
+                document.getElementById('edit-btn').style.display = 'none';
+                document.getElementById('save-btn').style.display = 'inline-block';
+                document.getElementById('add-item-btn').style.display = 'inline-block';
+                isEditMode = true;
+            }
+        };
+
+        window.saveEditedReceipt = async function() {
+            if (currentEditId) {
+                const clientName = document.getElementById('preview-client').textContent;
+                const receiptDate = document.getElementById('preview-date').textContent;
+                const paymentMethod = document.getElementById('preview-payment-method').textContent;
+                const items = [];
+                let total = 0;
+                document.querySelectorAll('#preview-items tr').forEach(row => {
+                    const desc = row.querySelector('.item-desc')?.value || '';
+                    const qty = parseFloat(row.querySelector('.item-qty')?.value || 0);
+                    const price = parseFloat(row.querySelector('.item-price')?.value || 0);
+                    const rowTotal = qty * price;
+                    if (desc && qty > 0 && price > 0) {
+                        items.push({ description: desc, quantity: qty, price: price, total: rowTotal });
+                        total += rowTotal;
+                    }
+                });
+
+                if (clientName && receiptDate && paymentMethod && items.length > 0) {
+                    try {
+                        await updateDoc(doc(db, 'receipts', currentEditId), {
+                            clientName,
+                            receiptDate,
+                            paymentMethod,
+                            items,
+                            totalAmount: total
+                        });
+                        alert('Receipt updated successfully!');
+                        editReceipt(currentEditId); // Refresh preview
+                        document.getElementById('save-btn').style.display = 'none';
+                        document.getElementById('add-item-btn').style.display = 'none';
+                        document.getElementById('edit-btn').style.display = 'inline-block';
+                        isEditMode = false;
+                    } catch (error) {
+                        console.error('Error updating receipt:', error);
+                        alert('Error updating receipt. Please try again.');
+                    }
+                } else {
+                    alert('Please fill all fields and add at least one item.');
+                }
+            }
+        };
+
+        window.deleteReceipt = async function(id) {
+            if (confirm('Are you sure you want to delete this receipt?')) {
+                try {
+                    await deleteDoc(doc(db, 'receipts', id));
+                    alert('Receipt deleted successfully!');
+                    loadReceipts(auth.currentUser.uid);
+                    document.getElementById('receipt-preview').style.display = 'none';
+                } catch (error) {
+                    console.error('Error deleting receipt:', error);
+                    alert('Error deleting receipt. Please try again.');
+                }
+            }
+        };
+
+        window.printReceipt = function() {
+            window.print();
+        };
+
+        window.downloadReceipt = function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: [80, 150]
+            });
+            doc.setFontSize(12);
+            doc.text('Receipt', 40, 10, { align: 'center' });
+            doc.setFontSize(10);
+            doc.text(`Client: ${document.getElementById('preview-client').textContent}`, 5, 20);
+            doc.text(`Date: ${document.getElementById('preview-date').textContent}`, 5, 25);
+            doc.text(`Payment Method: ${document.getElementById('preview-payment-method').textContent}`, 5, 30);
+            doc.text(`Receipt ID: ${document.getElementById('preview-id').textContent}`, 5, 35);
+
+            let y = 45;
+            doc.text('Description', 5, y);
+            doc.text('Qty', 35, y);
+            doc.text('Price', 45, y);
+            doc.text('Total', 60, y);
+            y += 5;
+            document.querySelectorAll('#preview-items tr').forEach(row => {
+                const cells = row.querySelectorAll('td');
+                doc.text(cells[0].textContent, 5, y);
+                doc.text(cells[1].textContent, 35, y);
+                doc.text(cells[2].textContent, 45, y);
+                doc.text(cells[3].textContent, 60, y);
+                y += 5;
+            });
+            doc.text(`Total Amount: $${document.getElementById('preview-total').textContent}`, 5, y + 5);
+            doc.text('Receipt Software Designed by As Developers', 40, y + 15, { align: 'center' });
+
+            const barcodeCanvas = document.createElement('canvas');
+            JsBarcode(barcodeCanvas, document.getElementById('preview-id').textContent, {
+                format: "CODE128",
+                width: 2,
+                height: 30,
+                displayValue: false
+            });
+            const barcodeImg = barcodeCanvas.toDataURL('image/png');
+            doc.addImage(barcodeImg, 'PNG', 20, y + 20, 40, 15);
+
+            doc.save('receipt.pdf');
+        };
+
+        window.updateEditTotals = function() {
+            let total = 0;
+            document.querySelectorAll('#preview-items tr').forEach(row => {
+                const qty = parseFloat(row.querySelector('.item-qty')?.value || 0);
+                const price = parseFloat(row.querySelector('.item-price')?.value || 0);
+                const rowTotal = qty * price;
+                row.querySelector('.item-total').textContent = rowTotal.toFixed(2);
+                total += rowTotal;
+            });
+            document.getElementById('preview-total').textContent = total.toFixed(2);
+            return total;
+        };
+
+        window.addEditItemRow = function() {
+            const tbody = document.getElementById('preview-items');
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td><input type="text" class="item-desc" placeholder="Item Description"></td>
+                <td><input type="number" class="item-qty" value="1" min="1"></td>
+                <td><input type="number" class="item-price" step="0.01" value="0.00"></td>
+                <td class="item-total">0.00</td>
+                <td><button type="button" onclick="removeItemRow(this)">Remove</button></td>
+            `;
+            tbody.appendChild(newRow);
+            newRow.querySelectorAll('.item-qty, .item-price').forEach(input => {
+                input.addEventListener('input', updateEditTotals);
+            });
+            updateEditTotals();
+        };
+
+        window.removeItemRow = function(button) {
+            button.parentElement.parentElement.remove();
+            updateEditTotals();
+        };
+    </script>
+</body>
+</html>
